@@ -1,0 +1,17 @@
+# Build output
+build/
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# Binary
+mini-redis
+
+# macOS
+.DS_Store
+
+# VSCode
+.vscode/
