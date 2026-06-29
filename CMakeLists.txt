@@ -5,4 +5,5 @@ set(CMAKE_CXX_STANDARD 17)
 
 add_executable(mini-redis
     src/main.cpp
+    src/store/types/StringType.cpp
 )

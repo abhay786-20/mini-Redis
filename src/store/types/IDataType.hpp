@@ -3,7 +3,7 @@
 
 class IDataType {
 public:
-   virtual std::string getTypeName()  = 0;
-   virtual std :: string serialize() = 0;
+   virtual std::string getType() = 0;
+   virtual std::string serialize() = 0;
    virtual ~IDataType() = default;
 };
