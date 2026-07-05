@@ -1,7 +1,4 @@
-.PHONY: build run watch clean init
-
-init:
-	mkdir -p build && cd build && cmake ..
+.PHONY: build run watch clean
 
 build:
 	cmake --build build

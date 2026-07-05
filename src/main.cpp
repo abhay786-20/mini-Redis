@@ -1,19 +1,18 @@
 #include <iostream>
-#include "store/StoreEngine.hpp"
-#include "store/types/DataTypeFactory.hpp"
-#include "store/types/StringType.hpp"
+#include "commands/CommandDispatcher.hpp"
+#include "commands/GetCommand.hpp"
+#include "commands/SetCommand.hpp"
 
 int main() {
     try {
-        auto& store = StoreEngine::getInstance();
+        CommandDispatcher dispatcher;
 
-        // set with actual value
-        auto val = std::make_unique<StringType>("Abhay");
-        store.set("name", std::move(val));
-        std::cout << store.get("name") << std::endl; // should print Abhay
+        dispatcher.registerCommand("SET", std::make_unique<SetCommand>("name", "Abhay"));
+        dispatcher.registerCommand("GET", std::make_unique<GetCommand>("name"));
 
-        store.del("name");
-        std::cout << store.get("name") << std::endl; // should throw
+        std::cout << dispatcher.dispatch("SET") << std::endl; // OK
+        std::cout << dispatcher.dispatch("GET") << std::endl; // Abhay
+        std::cout << dispatcher.dispatch("DEL") << std::endl; // throws
 
     } catch (const std::invalid_argument& e) {
         std::cerr << "Error: " << e.what() << std::endl;
