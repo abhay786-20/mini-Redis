@@ -5,9 +5,12 @@ set(CMAKE_CXX_STANDARD 17)
 
 add_executable(mini-redis
     src/main.cpp
+    src/store/StoreEngine.cpp
     src/store/types/StringType.cpp
     src/store/types/ListType.cpp
     src/store/types/HashType.cpp
     src/store/types/SetType.cpp
     src/store/types/DataTypeFactory.cpp
 )
+
+target_include_directories(mini-redis PRIVATE src)
