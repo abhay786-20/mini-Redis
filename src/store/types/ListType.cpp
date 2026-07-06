@@ -28,3 +28,7 @@ std::vector<std::string> ListType::getValue() {
 void ListType::setValue(std::vector<std::string> value) {
     _value = value;
 }
+
+void ListType::pushBack(const std::string& item) {
+    _value.push_back(item);
+}

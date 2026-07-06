@@ -13,4 +13,5 @@ public:
 
     std::vector<std::string> getValue();
     void setValue(std::vector<std::string> value);
+    void pushBack(const std::string& item);
 };  

@@ -14,6 +14,9 @@ add_executable(mini-redis
     src/commands/CommandDispatcher.cpp
     src/commands/GetCommand.cpp
     src/commands/SetCommand.cpp
+    src/commands/DelCommand.cpp
+    src/commands/LPushCommand.cpp
+    src/commands/HSetCommand.cpp
 )
 
 target_include_directories(mini-redis PRIVATE src)

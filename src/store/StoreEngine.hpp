@@ -13,4 +13,5 @@ public:
     std::string get(const std::string& key);
     void set(const std::string& key, std::unique_ptr<IDataType> value);
     void del(const std::string& key);
+    IDataType* getRaw(const std::string& key);
 };
