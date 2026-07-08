@@ -18,6 +18,7 @@ add_executable(mini-redis
     src/commands/LPushCommand.cpp
     src/commands/HSetCommand.cpp
     src/protocol/RespParser.cpp
+    src/server/TcpServer.cpp
 )
 
 target_include_directories(mini-redis PRIVATE src)
