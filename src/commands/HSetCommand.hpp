@@ -2,6 +2,7 @@
 #include "ICommand.hpp"
 #include "store/StoreEngine.hpp"
 #include "store/types/HashType.hpp"
+#include "store/DataEntry.hpp"
 
 class HSetCommand : public ICommand {
 private:

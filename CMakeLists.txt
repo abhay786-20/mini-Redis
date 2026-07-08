@@ -20,6 +20,8 @@ add_executable(mini-redis
     src/protocol/RespParser.cpp
     src/server/TcpServer.cpp
     src/eviction/LRUPolicy.cpp
+    src/store/DataEntry.cpp
 )
+
 
 target_include_directories(mini-redis PRIVATE src)

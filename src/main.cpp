@@ -1,7 +1,7 @@
 #include <iostream>
 #include "server/TcpServer.hpp"
-#include "eviction/LRUPolicy.hpp"
 #include "store/StoreEngine.hpp"
+#include "eviction/LRUPolicy.hpp"
 
 int main() {
     try {

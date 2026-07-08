@@ -2,6 +2,7 @@
 #include "ICommand.hpp"
 #include "store/StoreEngine.hpp"
 #include "store/types/ListType.hpp"
+#include "store/DataEntry.hpp"
 
 class LPushCommand : public ICommand {
 private:
