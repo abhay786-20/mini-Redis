@@ -3,10 +3,12 @@
 #include <memory>
 #include <unordered_map>
 #include "types/IDataType.hpp"
+#include "eviction/IEvictionPolicy.hpp"
 
 class StoreEngine {
 private:
     std::unordered_map<std::string, std::unique_ptr<IDataType>> _store;
+    std::unique_ptr<IEvictionPolicy> _evictionPolicy;
     StoreEngine() = default;
 public:
     static StoreEngine& getInstance();
@@ -14,4 +16,5 @@ public:
     void set(const std::string& key, std::unique_ptr<IDataType> value);
     void del(const std::string& key);
     IDataType* getRaw(const std::string& key);
+    void setEvictionPolicy(std::unique_ptr<IEvictionPolicy> policy);
 };
