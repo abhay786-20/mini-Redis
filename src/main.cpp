@@ -1,28 +1,38 @@
 #include <iostream>
+#include "protocol/RespParser.hpp"
 #include "commands/CommandDispatcher.hpp"
-#include "commands/GetCommand.hpp"
 #include "commands/SetCommand.hpp"
+#include "commands/GetCommand.hpp"
 #include "commands/DelCommand.hpp"
-#include "commands/LPushCommand.hpp"
-#include "commands/HSetCommand.hpp"
 
 int main() {
     try {
+        RespParser parser;
         CommandDispatcher dispatcher;
 
-        // register commands
-        dispatcher.registerCommand("SET", std::make_unique<SetCommand>("name", "Abhay"));
-        dispatcher.registerCommand("GET", std::make_unique<GetCommand>("name"));
-        dispatcher.registerCommand("DEL", std::make_unique<DelCommand>("name"));
-        dispatcher.registerCommand("LPUSH", std::make_unique<LPushCommand>("mylist", "hello"));
-        dispatcher.registerCommand("HSET", std::make_unique<HSetCommand>("user:1", "age", "25"));
+        // register factories — not pre-built objects
+        dispatcher.registerCommand("SET", [](const std::vector<std::string>& tokens) {
+            return std::make_unique<SetCommand>(tokens[1], tokens[2]);
+        });
 
-        std::cout << dispatcher.dispatch("SET") << std::endl;   // OK
-        std::cout << dispatcher.dispatch("GET") << std::endl;   // Abhay
-        std::cout << dispatcher.dispatch("LPUSH") << std::endl; // (integer) 1
-        std::cout << dispatcher.dispatch("HSET") << std::endl;  // (integer) 1
-        std::cout << dispatcher.dispatch("DEL") << std::endl;   // (integer) 1
-        std::cout << dispatcher.dispatch("GET") << std::endl;   // throws — key deleted
+        dispatcher.registerCommand("GET", [](const std::vector<std::string>& tokens) {
+            return std::make_unique<GetCommand>(tokens[1]);
+        });
+
+        dispatcher.registerCommand("DEL", [](const std::vector<std::string>& tokens) {
+            return std::make_unique<DelCommand>(tokens[1]);
+        });
+
+        // simulate raw RESP input
+        std::string raw1 = "*3\r\n$3\r\nSET\r\n$4\r\nname\r\n$5\r\nAbhay\r\n";
+        std::string raw2 = "*2\r\n$3\r\nGET\r\n$4\r\nname\r\n";
+        std::string raw3 = "*2\r\n$3\r\nDEL\r\n$4\r\nname\r\n";
+        std::string raw4 = "*2\r\n$3\r\nGET\r\n$4\r\nname\r\n";
+
+        std::cout << dispatcher.dispatch(parser.parse(raw1)) << std::endl; // OK
+        std::cout << dispatcher.dispatch(parser.parse(raw2)) << std::endl; // Abhay
+        std::cout << dispatcher.dispatch(parser.parse(raw3)) << std::endl; // (integer) 1
+        std::cout << dispatcher.dispatch(parser.parse(raw4)) << std::endl; // throws
 
     } catch (const std::invalid_argument& e) {
         std::cerr << "Error: " << e.what() << std::endl;
