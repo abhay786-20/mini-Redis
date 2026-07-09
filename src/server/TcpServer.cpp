@@ -12,8 +12,12 @@
 TcpServer::TcpServer(const std::string& host, int port) : _port(port), _socketFileDescriptor(-1) {
     // register all command factories on startup
     _dispatcher.registerCommand("SET", [](const std::vector<std::string>& tokens) {
-        return std::make_unique<SetCommand>(tokens[1], tokens[2]);
-    });
+    int64_t ttlMs = -1;
+    if (tokens.size() >= 5 && tokens[3] == "PX") {
+        ttlMs = std::stoll(tokens[4]);
+    }
+    return std::make_unique<SetCommand>(tokens[1], tokens[2], ttlMs);
+});
     _dispatcher.registerCommand("GET", [](const std::vector<std::string>& tokens) {
         return std::make_unique<GetCommand>(tokens[1]);
     });
