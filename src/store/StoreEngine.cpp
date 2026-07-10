@@ -37,3 +37,9 @@ DataEntry* StoreEngine::getRaw(const std::string& key) {
 void StoreEngine::setEvictionPolicy(std::unique_ptr<IEvictionPolicy> policy) {
     _evictionPolicy = std::move(policy);
 }
+
+void StoreEngine::evict() {
+    if (!_evictionPolicy) return;
+    std::string key = _evictionPolicy->evict();
+    _store.erase(key);
+}

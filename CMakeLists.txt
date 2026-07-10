@@ -21,6 +21,7 @@ add_executable(mini-redis
     src/server/TcpServer.cpp
     src/eviction/LRUPolicy.cpp
     src/store/DataEntry.cpp
+    src/eviction/LFUPolicy.cpp
 )
 
 

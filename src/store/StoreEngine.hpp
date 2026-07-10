@@ -18,4 +18,5 @@ public:
     void del(const std::string& key);
     DataEntry* getRaw(const std::string& key);
     void setEvictionPolicy(std::unique_ptr<IEvictionPolicy> policy);
+    void evict();
 };
