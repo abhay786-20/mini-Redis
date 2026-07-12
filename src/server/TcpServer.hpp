@@ -7,6 +7,9 @@
 #include "protocol/RespParser.hpp"
 #include "commands/ICommand.hpp"
 #include "commands/CommandDispatcher.hpp"
+#include "commands/SubscribeCommand.hpp"
+#include "commands/UnsubscribeCommand.hpp"
+#include "commands/PublishCommand.hpp"
 
 class TcpServer {
 private:
