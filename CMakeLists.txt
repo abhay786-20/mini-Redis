@@ -22,6 +22,7 @@ add_executable(mini-redis
     src/eviction/LRUPolicy.cpp
     src/store/DataEntry.cpp
     src/eviction/LFUPolicy.cpp
+    src/pubsub/PubSubManager.cpp
 )
 
 
