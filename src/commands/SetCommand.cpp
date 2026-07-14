@@ -7,5 +7,5 @@ std::string SetCommand::execute() {
     auto& store = StoreEngine::getInstance();
     auto val = std::make_unique<StringType>(_value);
     store.set(_key, std::move(val), _ttlMs);
-    return "OK";
+    return "+OK\r\n";
 }

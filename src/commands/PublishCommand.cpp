@@ -5,5 +5,5 @@ PublishCommand::PublishCommand(const std::string& channel, const std::string& me
 
 std::string PublishCommand::execute() {
     PubSubManager::getInstance().publish(_channel, _message);
-    return "(integer) 1";
+    return ":1\r\n";
 }

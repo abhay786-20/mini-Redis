@@ -5,7 +5,7 @@ void CommandDispatcher::registerCommand(const std::string& name, CommandFactory 
     _commands[name] = factory;
 }
 
-std::string CommandDispatcher::dispatch(const std::vector<std::string>& tokens) {
+std::string CommandDispatcher::dispatch(const std::vector<std::string>& tokens, int clientFd) {
     if (tokens.empty()) {
         throw std::invalid_argument("Empty command");
     }
@@ -13,5 +13,5 @@ std::string CommandDispatcher::dispatch(const std::vector<std::string>& tokens) 
     if (it == _commands.end()) {
         throw std::invalid_argument("Unknown command: " + tokens[0]);
     }
-    return it->second(tokens)->execute();
+    return it->second(tokens, clientFd)->execute();
 }

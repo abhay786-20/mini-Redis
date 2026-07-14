@@ -15,3 +15,6 @@ mini-redis
 
 # VSCode
 .vscode/
+
+# Local context
+handoff.md

@@ -13,32 +13,32 @@
 #include "commands/PublishCommand.hpp"
 
 TcpServer::TcpServer(const std::string& host, int port) : _port(port), _socketFileDescriptor(-1) {
-    _dispatcher.registerCommand("SET", [](const std::vector<std::string>& tokens) {
+    _dispatcher.registerCommand("SET", [](const std::vector<std::string>& tokens, int) {
         int64_t ttlMs = -1;
         if (tokens.size() >= 5 && tokens[3] == "PX") {
             ttlMs = std::stoll(tokens[4]);
         }
         return std::make_unique<SetCommand>(tokens[1], tokens[2], ttlMs);
     });
-    _dispatcher.registerCommand("GET", [](const std::vector<std::string>& tokens) {
+    _dispatcher.registerCommand("GET", [](const std::vector<std::string>& tokens, int) {
         return std::make_unique<GetCommand>(tokens[1]);
     });
-    _dispatcher.registerCommand("DEL", [](const std::vector<std::string>& tokens) {
+    _dispatcher.registerCommand("DEL", [](const std::vector<std::string>& tokens, int) {
         return std::make_unique<DelCommand>(tokens[1]);
     });
-    _dispatcher.registerCommand("LPUSH", [](const std::vector<std::string>& tokens) {
+    _dispatcher.registerCommand("LPUSH", [](const std::vector<std::string>& tokens, int) {
         return std::make_unique<LPushCommand>(tokens[1], tokens[2]);
     });
-    _dispatcher.registerCommand("HSET", [](const std::vector<std::string>& tokens) {
+    _dispatcher.registerCommand("HSET", [](const std::vector<std::string>& tokens, int) {
         return std::make_unique<HSetCommand>(tokens[1], tokens[2], tokens[3]);
     });
-    _dispatcher.registerCommand("SUBSCRIBE", [](const std::vector<std::string>& tokens) {
-        return std::make_unique<SubscribeCommand>(tokens[1], 0);
+    _dispatcher.registerCommand("SUBSCRIBE", [](const std::vector<std::string>& tokens, int clientFd) {
+        return std::make_unique<SubscribeCommand>(tokens[1], clientFd);
     });
-    _dispatcher.registerCommand("UNSUBSCRIBE", [](const std::vector<std::string>& tokens) {
-        return std::make_unique<UnsubscribeCommand>(tokens[1], 0);
+    _dispatcher.registerCommand("UNSUBSCRIBE", [](const std::vector<std::string>& tokens, int clientFd) {
+        return std::make_unique<UnsubscribeCommand>(tokens[1], clientFd);
     });
-    _dispatcher.registerCommand("PUBLISH", [](const std::vector<std::string>& tokens) {
+    _dispatcher.registerCommand("PUBLISH", [](const std::vector<std::string>& tokens, int) {
         return std::make_unique<PublishCommand>(tokens[1], tokens[2]);
     });
 }
@@ -93,9 +93,8 @@ void TcpServer::start() {
 
             try {
                 auto tokens = _parser.parse(raw);
-                std::string response = _dispatcher.dispatch(tokens);
-                std::string resp = "+" + response + "\r\n";
-                write(clientFd, resp.c_str(), resp.size());
+                std::string response = _dispatcher.dispatch(tokens, clientFd);
+                write(clientFd, response.c_str(), response.size());
             } catch (const std::exception& e) {
                 std::string err = "-ERR " + std::string(e.what()) + "\r\n";
                 write(clientFd, err.c_str(), err.size());

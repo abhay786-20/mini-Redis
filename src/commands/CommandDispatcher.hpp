@@ -6,12 +6,12 @@
 #include<vector>
 #include<functional>
 
-using CommandFactory = std::function<std::unique_ptr<ICommand>(const std::vector<std::string>&)>;
+using CommandFactory = std::function<std::unique_ptr<ICommand>(const std::vector<std::string>&, int)>;
 
 class CommandDispatcher {
 private:
     std::unordered_map<std::string, CommandFactory> _commands;
 public:
     void registerCommand(const std::string& name, CommandFactory factory);
-    std::string dispatch(const std::vector<std::string>& tokens);
+    std::string dispatch(const std::vector<std::string>& tokens, int clientFd);
 };
