@@ -2,6 +2,7 @@
 #include <string>
 #include <memory>
 #include <unordered_map>
+#include <mutex>
 #include "types/IDataType.hpp"
 #include "eviction/IEvictionPolicy.hpp"
 #include "DataEntry.hpp"
@@ -10,6 +11,7 @@ class StoreEngine {
 private:
     std::unordered_map<std::string, DataEntry> _store;
     std::unique_ptr<IEvictionPolicy> _evictionPolicy;
+    std::mutex _mutex;
     StoreEngine() = default;
 public:
     static StoreEngine& getInstance();

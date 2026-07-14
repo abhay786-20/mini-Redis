@@ -1,11 +1,13 @@
-#pragma once 
+#pragma once
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <mutex>
 
 class PubSubManager {
 private:
    std::unordered_map<std::string, std::vector<int>> _channels;
+   std::mutex _mutex;
    PubSubManager() = default;
 public:
     static PubSubManager& getInstance();

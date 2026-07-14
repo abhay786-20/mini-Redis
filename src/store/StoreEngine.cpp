@@ -7,6 +7,7 @@ StoreEngine& StoreEngine::getInstance() {
 }
 
 std::string StoreEngine::get(const std::string& key) {
+    std::lock_guard<std::mutex> lock(_mutex);
     auto it = _store.find(key);
     if (it == _store.end()) {
         throw std::invalid_argument("Key not found: " + key);
@@ -20,15 +21,18 @@ std::string StoreEngine::get(const std::string& key) {
 }
 
 void StoreEngine::set(const std::string& key, std::unique_ptr<IDataType> value, int64_t ttlMs) {
+    std::lock_guard<std::mutex> lock(_mutex);
     _store[key] = DataEntry(std::move(value), ttlMs);
     if (_evictionPolicy) _evictionPolicy->onSet(key);
 }
 
 void StoreEngine::del(const std::string& key) {
+    std::lock_guard<std::mutex> lock(_mutex);
     _store.erase(key);
 }
 
 DataEntry* StoreEngine::getRaw(const std::string& key) {
+    std::lock_guard<std::mutex> lock(_mutex);
     auto it = _store.find(key);
     if (it == _store.end()) return nullptr;
     return &it->second;
@@ -39,6 +43,7 @@ void StoreEngine::setEvictionPolicy(std::unique_ptr<IEvictionPolicy> policy) {
 }
 
 void StoreEngine::evict() {
+    std::lock_guard<std::mutex> lock(_mutex);
     if (!_evictionPolicy) return;
     std::string key = _evictionPolicy->evict();
     _store.erase(key);
