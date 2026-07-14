@@ -78,31 +78,37 @@ void TcpServer::start() {
             continue;
         }
 
-        std::cout << "Client connected" << std::endl;
+        std::cout << "Client connected: fd=" << clientFd << std::endl;
 
-        char buffer[4096];
-        while (true) {
-            memset(buffer, 0, sizeof(buffer));
-            int bytesRead = read(clientFd, buffer, sizeof(buffer) - 1);
-            if (bytesRead <= 0) {
-                std::cout << "Client disconnected" << std::endl;
-                break;
-            }
-
-            std::string raw(buffer, bytesRead);
-
-            try {
-                auto tokens = _parser.parse(raw);
-                std::string response = _dispatcher.dispatch(tokens, clientFd);
-                write(clientFd, response.c_str(), response.size());
-            } catch (const std::exception& e) {
-                std::string err = "-ERR " + std::string(e.what()) + "\r\n";
-                write(clientFd, err.c_str(), err.size());
-            }
-        }
-
-        close(clientFd);
+        std::thread([this, clientFd]() {
+            handleClient(clientFd);
+        }).detach();
     }
 
     close(_socketFileDescriptor);
+}
+
+void TcpServer::handleClient(int clientFd) {
+    char buffer[4096];
+    while (true) {
+        memset(buffer, 0, sizeof(buffer));
+        int bytesRead = read(clientFd, buffer, sizeof(buffer) - 1);
+        if (bytesRead <= 0) {
+            std::cout << "Client disconnected: fd=" << clientFd << std::endl;
+            break;
+        }
+
+        std::string raw(buffer, bytesRead);
+
+        try {
+            auto tokens = _parser.parse(raw);
+            std::string response = _dispatcher.dispatch(tokens, clientFd);
+            write(clientFd, response.c_str(), response.size());
+        } catch (const std::exception& e) {
+            std::string err = "-ERR " + std::string(e.what()) + "\r\n";
+            write(clientFd, err.c_str(), err.size());
+        }
+    }
+
+    close(clientFd);
 }

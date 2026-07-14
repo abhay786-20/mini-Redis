@@ -5,5 +5,5 @@ SubscribeCommand::SubscribeCommand(const std::string& channel, int clientFd)
 
 std::string SubscribeCommand::execute() {
     PubSubManager::getInstance().subscribe(_channel, _clientFd);
-    return "+subscribed to " + _channel + "\r\n";
+    return "*3\r\n$9\r\nsubscribe\r\n$" + std::to_string(_channel.size()) + "\r\n" + _channel + "\r\n:1\r\n";
 }
