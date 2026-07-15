@@ -9,7 +9,7 @@ void CommandDispatcher::registerCommand(const std::string& name, CommandFactory 
     }
 }
 
-std::string CommandDispatcher::dispatch(const std::vector<std::string>& tokens, int clientFd) {
+std::string CommandDispatcher::dispatch(const std::vector<std::string>& tokens, int clientFd, bool logToAof) {
     if (tokens.empty()) {
         throw std::invalid_argument("Empty command");
     }
@@ -18,7 +18,7 @@ std::string CommandDispatcher::dispatch(const std::vector<std::string>& tokens, 
         throw std::invalid_argument("Unknown command: " + tokens[0]);
     }
     std::string response = it->second(tokens, clientFd)->execute();
-    if (_writeCommands.count(tokens[0])) {
+    if (logToAof && _writeCommands.count(tokens[0])) {
         AofWriter::getInstance().append(tokens);
     }
     return response;

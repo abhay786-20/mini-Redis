@@ -1,6 +1,8 @@
 #include "server/TcpServer.hpp"
 #include <iostream>
 #include <stdexcept>
+#include <fstream>
+#include <sstream>
 #include <arpa/inet.h>
 #include <cstring>
 #include "commands/SetCommand.hpp"
@@ -86,6 +88,37 @@ void TcpServer::start() {
     }
 
     close(_socketFileDescriptor);
+}
+
+void TcpServer::loadAof(const std::string& path) {
+    std::ifstream file(path);
+    if (!file.is_open()) {
+        std::cout << "No AOF file found at " << path << ", starting with empty store" << std::endl;
+        return;
+    }
+
+    std::cout << "Replaying AOF from " << path << "..." << std::endl;
+    std::string line;
+    int replayed = 0;
+    while (std::getline(file, line)) {
+        if (line.empty()) continue;
+
+        std::vector<std::string> tokens;
+        std::istringstream iss(line);
+        std::string token;
+        while (iss >> token) {
+            tokens.push_back(token);
+        }
+        if (tokens.empty()) continue;
+
+        try {
+            _dispatcher.dispatch(tokens, -1, false);
+            replayed++;
+        } catch (const std::exception& e) {
+            std::cerr << "AOF replay error on line \"" << line << "\": " << e.what() << std::endl;
+        }
+    }
+    std::cout << "AOF replay complete: " << replayed << " commands replayed" << std::endl;
 }
 
 void TcpServer::handleClient(int clientFd) {

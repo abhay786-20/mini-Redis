@@ -15,5 +15,5 @@ private:
     std::unordered_set<std::string> _writeCommands;
 public:
     void registerCommand(const std::string& name, CommandFactory factory, bool isWriteCommand = false);
-    std::string dispatch(const std::vector<std::string>& tokens, int clientFd);
+    std::string dispatch(const std::vector<std::string>& tokens, int clientFd, bool logToAof = true);
 };

@@ -22,4 +22,5 @@ private:
 public:
     TcpServer(const std::string& host, int port);
     void start();
+    void loadAof(const std::string& path = "appendonly.aof");
 };
