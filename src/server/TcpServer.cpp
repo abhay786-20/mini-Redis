@@ -19,19 +19,19 @@ TcpServer::TcpServer(const std::string& host, int port) : _port(port), _socketFi
             ttlMs = std::stoll(tokens[4]);
         }
         return std::make_unique<SetCommand>(tokens[1], tokens[2], ttlMs);
-    });
+    }, true);
     _dispatcher.registerCommand("GET", [](const std::vector<std::string>& tokens, int) {
         return std::make_unique<GetCommand>(tokens[1]);
     });
     _dispatcher.registerCommand("DEL", [](const std::vector<std::string>& tokens, int) {
         return std::make_unique<DelCommand>(tokens[1]);
-    });
+    }, true);
     _dispatcher.registerCommand("LPUSH", [](const std::vector<std::string>& tokens, int) {
         return std::make_unique<LPushCommand>(tokens[1], tokens[2]);
-    });
+    }, true);
     _dispatcher.registerCommand("HSET", [](const std::vector<std::string>& tokens, int) {
         return std::make_unique<HSetCommand>(tokens[1], tokens[2], tokens[3]);
-    });
+    }, true);
     _dispatcher.registerCommand("SUBSCRIBE", [](const std::vector<std::string>& tokens, int clientFd) {
         return std::make_unique<SubscribeCommand>(tokens[1], clientFd);
     });

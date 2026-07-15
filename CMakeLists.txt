@@ -26,6 +26,7 @@ add_executable(mini-redis
     src/commands/SubscribeCommand.cpp
     src/commands/UnsubscribeCommand.cpp
     src/commands/PublishCommand.cpp
+    src/persistence/AofWriter.cpp
 )
 
 

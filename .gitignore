@@ -10,6 +10,9 @@ cmake_install.cmake
 # Binary
 mini-redis
 
+# AOF persistence file
+appendonly.aof
+
 # macOS
 .DS_Store
 
