@@ -13,6 +13,8 @@
 #include "commands/SubscribeCommand.hpp"
 #include "commands/UnsubscribeCommand.hpp"
 #include "commands/PublishCommand.hpp"
+#include "commands/SaveCommand.hpp"
+#include "persistence/SnapshotWriter.hpp"
 
 TcpServer::TcpServer(const std::string& host, int port) : _port(port), _socketFileDescriptor(-1) {
     _dispatcher.registerCommand("SET", [](const std::vector<std::string>& tokens, int) {
@@ -42,6 +44,9 @@ TcpServer::TcpServer(const std::string& host, int port) : _port(port), _socketFi
     });
     _dispatcher.registerCommand("PUBLISH", [](const std::vector<std::string>& tokens, int) {
         return std::make_unique<PublishCommand>(tokens[1], tokens[2]);
+    });
+    _dispatcher.registerCommand("SAVE", [](const std::vector<std::string>&, int) {
+        return std::make_unique<SaveCommand>();
     });
 }
 
@@ -119,6 +124,10 @@ void TcpServer::loadAof(const std::string& path) {
         }
     }
     std::cout << "AOF replay complete: " << replayed << " commands replayed" << std::endl;
+}
+
+bool TcpServer::loadSnapshot(const std::string& path) {
+    return SnapshotWriter::load(path);
 }
 
 void TcpServer::handleClient(int clientFd) {

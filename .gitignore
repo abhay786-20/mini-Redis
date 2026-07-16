@@ -13,6 +13,9 @@ mini-redis
 # AOF persistence file
 appendonly.aof
 
+# Snapshot persistence file
+dump.rdb
+
 # macOS
 .DS_Store
 
@@ -21,3 +24,6 @@ appendonly.aof
 
 # Local context
 handoff.md
+
+# Local context
+*.idx

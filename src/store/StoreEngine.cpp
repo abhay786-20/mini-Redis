@@ -48,3 +48,11 @@ void StoreEngine::evict() {
     std::string key = _evictionPolicy->evict();
     _store.erase(key);
 }
+
+void StoreEngine::forEachEntry(const std::function<void(const std::string&, DataEntry&)>& fn) {
+    std::lock_guard<std::mutex> lock(_mutex);
+    for (auto& [key, entry] : _store) {
+        if (entry.isExpired()) continue;
+        fn(key, entry);
+    }
+}

@@ -25,3 +25,7 @@ bool DataEntry::isExpired() const {
 IDataType* DataEntry::getData() {
     return _data.get();
 }
+
+int64_t DataEntry::getExpiryMs() const {
+    return _expiryMs;
+}

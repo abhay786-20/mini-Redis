@@ -10,7 +10,7 @@ std::string HSetCommand::execute() {
     if (entry == nullptr) {
         auto newHash = std::make_unique<HashType>(std::unordered_map<std::string, std::string>{{_field, _value}});
         store.set(_key, std::move(newHash));
-        return "(integer) 1";
+        return ":1\r\n";
     }
 
     if (entry->getData()->getType() != "hash") {
@@ -19,5 +19,5 @@ std::string HSetCommand::execute() {
 
     HashType* hash = static_cast<HashType*>(entry->getData());
     hash->setField(_field, _value);
-    return "(integer) 1";
+    return ":1\r\n";
 }

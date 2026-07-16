@@ -13,4 +13,5 @@ public:
     DataEntry(std::unique_ptr<IDataType> data, int64_t ttlMs = -1);  // main constructor
     bool isExpired() const;
     IDataType* getData();
+    int64_t getExpiryMs() const;
 };

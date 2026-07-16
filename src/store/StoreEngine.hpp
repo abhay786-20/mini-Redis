@@ -3,6 +3,7 @@
 #include <memory>
 #include <unordered_map>
 #include <mutex>
+#include <functional>
 #include "types/IDataType.hpp"
 #include "eviction/IEvictionPolicy.hpp"
 #include "DataEntry.hpp"
@@ -21,4 +22,5 @@ public:
     DataEntry* getRaw(const std::string& key);
     void setEvictionPolicy(std::unique_ptr<IEvictionPolicy> policy);
     void evict();
+    void forEachEntry(const std::function<void(const std::string&, DataEntry&)>& fn);
 };

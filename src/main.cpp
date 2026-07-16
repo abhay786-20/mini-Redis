@@ -9,7 +9,9 @@ int main() {
         store.setEvictionPolicy(std::make_unique<LRUPolicy>());
 
         TcpServer server("0.0.0.0", 6379);
-        server.loadAof();
+        if (!server.loadSnapshot()) {
+            server.loadAof();
+        }
         server.start();
     } catch (const std::exception& e) {
         std::cerr << "Fatal: " << e.what() << std::endl;

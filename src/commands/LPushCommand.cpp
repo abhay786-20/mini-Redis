@@ -10,7 +10,7 @@ std::string LPushCommand::execute() {
     if (entry == nullptr) {
         auto newList = std::make_unique<ListType>(std::vector<std::string>{_value});
         store.set(_key, std::move(newList));
-        return "(integer) 1";
+        return ":1\r\n";
     }
 
     if (entry->getData()->getType() != "list") {
@@ -19,5 +19,5 @@ std::string LPushCommand::execute() {
 
     ListType* list = static_cast<ListType*>(entry->getData());
     list->pushBack(_value);
-    return "(integer) 1";
+    return ":1\r\n";
 }

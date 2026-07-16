@@ -23,4 +23,5 @@ public:
     TcpServer(const std::string& host, int port);
     void start();
     void loadAof(const std::string& path = "appendonly.aof");
+    bool loadSnapshot(const std::string& path = "dump.rdb");
 };
