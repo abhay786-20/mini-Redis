@@ -16,6 +16,9 @@ By the end you'll have:
 - Hands-on systems programming experience (sockets, threads, file I/O)
 - A project you can fully explain and defend in any engineering interview
 
+> **New here, or coming back after a while?** Start with [`OVERVIEW.md`](OVERVIEW.md) for a
+> quick tour, then [`HLD.md`](HLD.md) for the architecture and request-lifecycle deep dive.
+
 ---
 
 ## Features
@@ -38,6 +41,8 @@ By the end you'll have:
 | `SUBSCRIBE channel` | Subscribe to a Pub/Sub channel |
 | `PUBLISH channel message` | Publish to a channel |
 | `UNSUBSCRIBE channel` | Unsubscribe from a channel |
+| `SAVE` | Snapshot the entire store to `dump.rdb` |
+| `AUTH password` | Authenticate the current connection |
 
 ### Eviction Policies (Strategy Pattern)
 - **LRU** — Least Recently Used
@@ -55,10 +60,16 @@ By the end you'll have:
 - Multiple subscribers per channel
 - Real-time message delivery to connected clients
 
-### Persistence (Coming)
-- AOF (Append Only File) — logs every write command
-- AOF Replay — reconstruct store state on startup
-- Snapshot (RDB-style) — binary serialization of store
+### Persistence
+- AOF (Append Only File) — logs every write command to `appendonly.aof`
+- AOF Replay — reconstruct store state on startup by replaying the log
+- Snapshot (RDB-style) — `SAVE` binary-serializes the whole store to `dump.rdb`;
+  on startup the snapshot is preferred and AOF replay is the fallback if no snapshot exists
+
+### Auth (Proxy Pattern)
+- Optional password, passed as a CLI argument at startup: `./mini-redis <password>`
+- `AuthProxy` gates every command except `AUTH` behind authentication, per connection
+- No password provided → auth is disabled and the server behaves exactly as before
 
 ---
 
@@ -72,7 +83,7 @@ By the end you'll have:
 | **Command** | `ICommand`, all command classes | Encapsulate requests as objects |
 | **Observer** | `PubSubManager` | Notify subscribers on publish |
 | **Decorator** | `DataEntry` | Wrap IDataType with TTL metadata |
-| **Proxy** | Auth layer (coming) | Gate access before reaching store |
+| **Proxy** | `AuthProxy` | Gate access to `CommandDispatcher` until authenticated |
 
 ---
 
@@ -87,6 +98,12 @@ By the end you'll have:
 ┌──────────────────────▼──────────────────────────────┐
 │              RESP Protocol Parser                    │
 │         (deserialize raw bytes → tokens)             │
+└──────────────────────┬──────────────────────────────┘
+                       │
+┌──────────────────────▼──────────────────────────────┐
+│                  Auth Proxy                          │
+│  (gates every command except AUTH until authed;      │
+│   no-op pass-through if no password configured)       │
 └──────────────────────┬──────────────────────────────┘
                        │
 ┌──────────────────────▼──────────────────────────────┐
@@ -134,7 +151,9 @@ mini-redis/
 │   │   ├── HSetCommand.hpp / .cpp
 │   │   ├── SubscribeCommand.hpp / .cpp
 │   │   ├── PublishCommand.hpp / .cpp
-│   │   └── UnsubscribeCommand.hpp / .cpp
+│   │   ├── UnsubscribeCommand.hpp / .cpp
+│   │   ├── SaveCommand.hpp / .cpp
+│   │   └── AuthCommand.hpp / .cpp
 │   ├── store/
 │   │   ├── StoreEngine.hpp / .cpp      # Singleton store
 │   │   ├── DataEntry.hpp / .cpp        # Decorator — wraps IDataType with TTL
@@ -151,9 +170,11 @@ mini-redis/
 │   │   └── LFUPolicy.hpp / .cpp        # Frequency buckets
 │   ├── pubsub/
 │   │   └── PubSubManager.hpp / .cpp    # Observer pattern
-│   └── persistence/
-│       ├── AOFWriter.hpp / .cpp        # Coming Day 21
-│       └── SnapshotWriter.hpp / .cpp   # Coming Day 23
+│   ├── persistence/
+│   │   ├── AofWriter.hpp / .cpp        # Appends write commands to appendonly.aof
+│   │   └── SnapshotWriter.hpp / .cpp   # Binary save()/load() of the whole store to dump.rdb
+│   └── auth/
+│       └── AuthProxy.hpp / .cpp        # Proxy pattern — gates CommandDispatcher access
 └── tests/
 ```
 
@@ -191,6 +212,18 @@ GET session   # ERR Key expired after 5 seconds
 # Pub/Sub (requires two terminals)
 SUBSCRIBE news        # terminal 1
 PUBLISH news "hello"  # terminal 2
+
+# Snapshot persistence
+SAVE   # writes the whole store to dump.rdb; restored automatically on next startup
+```
+
+### Running with auth enabled
+```bash
+./build/mini-redis s3cret   # password is an optional CLI arg; omit it to disable auth
+
+redis-cli -p 6379
+AUTH s3cret
+SET name Abhay   # NOAUTH error if you skip the AUTH step
 ```
 
 ---
@@ -234,7 +267,7 @@ PUBLISH news "hello"  # terminal 2
 | 20 | End-to-end Pub/Sub test with two redis-cli clients |
 
 ### Week 5 — Persistence + Polish
-| Day | Plan |
+| Day | What We Built |
 |---|---|
 | 21 | AOF Writer — append every write command to log file |
 | 22 | AOF Replay — reconstruct store on startup from log |
@@ -265,6 +298,33 @@ Simpler to reason about for learning purposes. Each client gets its own stack,
 its own blocking `read()` loop, no callback hell. Production Redis uses an
 event loop (ae.c) but that's a separate learning track.
 
+**Why does `AuthProxy` wrap `CommandDispatcher` instead of checking auth inside each command?**
+That's the Proxy pattern: a stand-in with the same call shape as the real subject
+(`dispatch(tokens, clientFd)`), sitting in front of it to control access. Commands stay
+unaware that auth exists at all — `TcpServer` calls `AuthProxy::dispatch()` instead of
+`CommandDispatcher::dispatch()` directly, and the proxy decides whether to forward the call.
+
+**Why does snapshot restore take precedence over AOF replay on startup, instead of combining both?**
+Real Redis layers them (RDB base + AOF-since-snapshot), but that requires tracking which AOF
+offset the snapshot covers so it isn't double-applied. This project's AOF is never truncated,
+so replaying it after a snapshot restore would redo everything already in the snapshot —
+harmless for idempotent commands like `SET`/`DEL`, but wrong for accumulating ones like `LPUSH`.
+Treating snapshot and AOF as alternatives (snapshot if present, else full AOF replay) sidesteps
+that correctness trap. See `HLD.md` for the full write-up.
+
+---
+
+## Known Limitations
+
+See [`HLD.md`](HLD.md#known-limitations) for the full list and reasoning. In brief:
+- `ListType`/`HashType`/`SetType` serialize to delimited strings, which corrupts on values
+  containing that delimiter (`,`, `:`, `|`). Only `SnapshotWriter`'s binary format avoids this.
+- `appendonly.aof` is plain whitespace-joined tokens — breaks on spaces inside a key/value.
+- `StoreEngine::evict()` is never invoked automatically; eviction policies track access but
+  nothing enforces a memory cap yet.
+- Snapshot and AOF are alternatives, not layered (see design decision above) — a snapshot
+  taken mid-session drops any AOF-only history once restored.
+
 ---
 
 ## Tech Stack
@@ -285,3 +345,5 @@ event loop (ae.c) but that's a separate learning track.
 - "Eviction policies are swappable at runtime via the Strategy pattern — StoreEngine has no knowledge of which policy is active"
 - "TTL is implemented as lazy expiry using a Decorator — each store entry carries an optional expiry timestamp checked on access"
 - "Pub/Sub uses the Observer pattern — PubSubManager holds channel → subscriber file descriptor mappings and writes RESP directly to client sockets"
+- "Auth is a Proxy sitting in front of the command dispatcher — commands have zero awareness that authentication exists, and it's a no-op pass-through when no password is configured"
+- "Persistence has two independent layers: an AOF that's replayed from scratch, and a binary RDB-style snapshot that takes precedence when present — I can explain the tradeoff of not layering them like real Redis does"

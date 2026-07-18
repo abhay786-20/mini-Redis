@@ -14,7 +14,9 @@
 #include "commands/UnsubscribeCommand.hpp"
 #include "commands/PublishCommand.hpp"
 #include "commands/SaveCommand.hpp"
+#include "commands/AuthCommand.hpp"
 #include "persistence/SnapshotWriter.hpp"
+#include "auth/AuthProxy.hpp"
 
 TcpServer::TcpServer(const std::string& host, int port) : _port(port), _socketFileDescriptor(-1) {
     _dispatcher.registerCommand("SET", [](const std::vector<std::string>& tokens, int) {
@@ -47,6 +49,12 @@ TcpServer::TcpServer(const std::string& host, int port) : _port(port), _socketFi
     });
     _dispatcher.registerCommand("SAVE", [](const std::vector<std::string>&, int) {
         return std::make_unique<SaveCommand>();
+    });
+    _dispatcher.registerCommand("AUTH", [](const std::vector<std::string>& tokens, int clientFd) {
+        if (tokens.size() < 2) {
+            throw std::invalid_argument("wrong number of arguments for 'AUTH' command");
+        }
+        return std::make_unique<AuthCommand>(tokens[1], clientFd);
     });
 }
 
@@ -144,7 +152,7 @@ void TcpServer::handleClient(int clientFd) {
 
         try {
             auto tokens = _parser.parse(raw);
-            std::string response = _dispatcher.dispatch(tokens, clientFd);
+            std::string response = AuthProxy::getInstance().dispatch(_dispatcher, tokens, clientFd);
             write(clientFd, response.c_str(), response.size());
         } catch (const std::exception& e) {
             std::string err = "-ERR " + std::string(e.what()) + "\r\n";
@@ -152,5 +160,6 @@ void TcpServer::handleClient(int clientFd) {
         }
     }
 
+    AuthProxy::getInstance().removeClient(clientFd);
     close(clientFd);
 }

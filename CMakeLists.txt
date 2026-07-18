@@ -29,6 +29,8 @@ add_executable(mini-redis
     src/persistence/AofWriter.cpp
     src/persistence/SnapshotWriter.cpp
     src/commands/SaveCommand.cpp
+    src/auth/AuthProxy.cpp
+    src/commands/AuthCommand.cpp
 )
 
 
